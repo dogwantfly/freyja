@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import createHttpError from 'http-errors';
 import OrderModel from '@/models/order';
+import { createSesEncrypt, createShaEncrypt } from '@/utils/crypto';
 
 export const getAllOrderList: RequestHandler = async (_req, res, next) => {
     try {
@@ -68,10 +69,28 @@ export const createOneOrder: RequestHandler = async (req, res, next) => {
         await result.populate({
             path: 'roomId'
         });
+        const TimeStamp = Math.round(new Date().getTime() / 1000).toString();
+        const paymentOrder = {
+            ...result.toObject(),
+            TimeStamp,
+            Amt: parseInt((result.roomId as any).price),
+            MerchantOrderNo: TimeStamp,
+            ItemDesc: '房間預訂',
+            Email: userInfo.email || ''
+        };
+        // 產生金流串接所需的加解密資訊
+        const aesEncrypt = createSesEncrypt(paymentOrder);
+        const shaEncrypt = createShaEncrypt(aesEncrypt);
+        
+        const paymentData = {
+            ...paymentOrder,
+            aesEncrypt,
+            shaEncrypt
+        };
 
         res.send({
             status: true,
-            result
+            result: paymentData
         });
     } catch (error) {
         next(error);
