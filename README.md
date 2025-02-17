@@ -62,7 +62,7 @@ npm install
 NODE_ENV = "development"
 
 # 伺服器埠號
-PORT = 3005
+PORT = 80
 
 # MongoDB 連結
 DATABASE = "mongodb+srv://example:<password>@cluster0.xqonzdp.mongodb.net/"
