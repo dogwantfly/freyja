@@ -2,6 +2,16 @@ import { Schema, model, type Document } from 'mongoose';
 import validator from 'validator';
 import { zipCodeList } from '@/utils/zipcodes';
 
+export interface IPaymentInfo {
+  TimeStamp: string;
+  Amt: number;
+  MerchantOrderNo: string;
+  ItemDesc: string;
+  Email: string;
+  aesEncrypt: string;
+  shaEncrypt: string;
+}
+
 export interface IOrder extends Document {
     roomId: Schema.Types.ObjectId;
     checkInDate: Date;
@@ -18,6 +28,7 @@ export interface IOrder extends Document {
         };
     };
     status: number;
+    paymentInfo?: IPaymentInfo;
 }
 
 const orderSchema = new Schema<IOrder>(
@@ -95,6 +106,15 @@ const orderSchema = new Schema<IOrder>(
         status: {
             type: Number,
             default: 0
+        },
+        paymentInfo: {
+            TimeStamp: { type: String },
+            Amt: { type: Number },
+            MerchantOrderNo: { type: String },
+            ItemDesc: { type: String },
+            Email: { type: String },
+            aesEncrypt: { type: String },
+            shaEncrypt: { type: String }
         }
     },
     {

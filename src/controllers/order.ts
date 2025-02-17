@@ -88,6 +88,9 @@ export const createOneOrder: RequestHandler = async (req, res, next) => {
             shaEncrypt
         };
 
+        result.paymentInfo = paymentData;
+        await result.save();
+
         res.send({
             status: true,
             result: paymentData
