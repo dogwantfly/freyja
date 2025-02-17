@@ -7,6 +7,6 @@ const router = Router()
 // 藍新金流通知
 router.post('/newebpay_notify', newebpayController.notify)
 // 藍新金流回導
-router.post('/newebpay_return', newebpayController.paymentReturn)
+router.all('/newebpay_return', newebpayController.paymentReturn)
 
 export default router
