@@ -66,6 +66,7 @@ export const paymentReturn = (req: Request, res: Response, next: NextFunction) =
     // 但如果僅用於顯示付款成功畫面，
     // 則直接重導到 Nuxt3 前端頁面即可
     const frontendURL = process.env.FRONTEND_URL || 'https://nuxt3-hotel-website.onrender.com'
+    console.log('frontendURL', `${frontendURL}/pay/success`)
     return res.redirect(`${frontendURL}/pay/success`)
   } catch (error) {
     next(error)
