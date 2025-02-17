@@ -5,6 +5,7 @@ import orders from './api/v1/orders';
 import rooms from './api/v1/rooms';
 import user from './api/v1/user';
 import verify from './api/v1/verify';
+import newebpay from './newebpay';
 import healthCheck from './healthCheck';
 import swagger from './swagger';
 
@@ -54,5 +55,16 @@ routes.use(
 );
 
 routes.use('/api/v1/admin', admin);
+
+
+
+routes.use(
+    /**
+     * #swagger.tags = ["NewebPay - 藍新金流"]
+     */
+    '/',
+    newebpay
+);
+
 
 export default routes;
