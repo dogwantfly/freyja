@@ -4,7 +4,6 @@ const {
   HASHKEY,
   HASHIV,
   Version,
-  PayGateWay,
   NotifyUrl,
   ReturnUrl,
 } = process.env;
