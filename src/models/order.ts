@@ -28,6 +28,7 @@ export interface IOrder extends Document {
         };
     };
     status: number;
+    isPaid?: boolean;
     paymentInfo?: IPaymentInfo;
 }
 
@@ -107,14 +108,12 @@ const orderSchema = new Schema<IOrder>(
             type: Number,
             default: 0
         },
+        isPaid: {
+            type: Boolean,
+            default: false
+        },
         paymentInfo: {
-            TimeStamp: { type: String },
-            Amt: { type: Number },
-            MerchantOrderNo: { type: String },
-            ItemDesc: { type: String },
-            Email: { type: String },
-            aesEncrypt: { type: String },
-            shaEncrypt: { type: String }
+            type: Schema.Types.Mixed
         }
     },
     {

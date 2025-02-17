@@ -62,3 +62,16 @@ export const createShaEncrypt = (aesEncrypt: string): string => {
   const plainText = `HashKey=${HASHKEY}&${aesEncrypt}&HashIV=${HASHIV}`;
   return sha.update(plainText).digest('hex').toUpperCase();
 }
+
+// 對應文件 21, 22 頁：將 aes 解密
+export const createSesDecrypt = (TradeInfo: string): any => {
+  if (!HASHKEY || !HASHIV) {
+    throw new Error('HASHKEY and HASHIV are required');
+  }
+  const decrypt = crypto.createDecipheriv('aes256', HASHKEY, HASHIV);
+  decrypt.setAutoPadding(false);
+  const text = decrypt.update(TradeInfo, 'hex', 'utf8');
+  const plainText = text + decrypt.final('utf8');
+  const result = plainText.replace(/[\x00-\x20]+/g, '');
+  return JSON.parse(result);
+}
