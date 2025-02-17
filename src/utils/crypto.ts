@@ -40,7 +40,13 @@ export const createSesEncrypt = (TradeInfo: {
   ItemDesc: string;
   Email: string;
 }): string => {
-  const encrypt = crypto.createCipheriv('aes-256-cbc', HASHKEY, HASHIV);
+  if (!HASHKEY || !HASHIV) {
+    throw new Error('HASHKEY and HASHIV are required');
+  }
+  
+  const key = Buffer.from(HASHKEY, 'utf8');
+  const iv = Buffer.from(HASHIV, 'utf8');
+  const encrypt = crypto.createCipheriv('aes-256-cbc', key, iv);
   const enc = encrypt.update(genDataChain(TradeInfo), 'utf8', 'hex');
   return enc + encrypt.final('hex');
 }
@@ -48,8 +54,11 @@ export const createSesEncrypt = (TradeInfo: {
 // 對應文件 P18：使用 sha256 加密
 // $hashs="HashKey=".$key."&".$edata1."&HashIV=".$iv;
 export const createShaEncrypt = (aesEncrypt: string): string => {
+  if (!HASHKEY || !HASHIV) {
+    throw new Error('HASHKEY and HASHIV are required');
+  }
+  
   const sha = crypto.createHash('sha256');
   const plainText = `HashKey=${HASHKEY}&${aesEncrypt}&HashIV=${HASHIV}`;
-
   return sha.update(plainText).digest('hex').toUpperCase();
 }
