@@ -6,6 +6,7 @@ import rooms from './api/v1/rooms';
 import user from './api/v1/user';
 import verify from './api/v1/verify';
 import newebpay from './newebpay';
+import email from './email';
 import healthCheck from './healthCheck';
 import swagger from './swagger';
 
@@ -66,5 +67,12 @@ routes.use(
     newebpay
 );
 
+routes.use(
+    /**
+     * #swagger.tags = ["Email - 寄信"]
+     */
+    '/email',
+    email
+);
 
 export default routes;
