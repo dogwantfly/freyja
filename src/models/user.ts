@@ -5,16 +5,17 @@ import ZipCodeMap, { zipCodeList } from '@/utils/zipcodes';
 export interface IUser extends Document {
     name: string;
     email: string;
-    password: string;
-    phone: string;
-    birthday: Date;
-    address: {
+    password?: string;
+    phone?: string;
+    birthday?: Date;
+    address?: {
         zipcode: number;
         detail: string;
         county: string;
         city: string;
     };
-    verificationToken: string;
+    verificationToken?: string;
+    googleId?: string;
 }
 
 const userSchema = new Schema<IUser>(
@@ -41,36 +42,41 @@ const userSchema = new Schema<IUser>(
         },
         password: {
             type: String,
-            required: [true, 'password 未填寫'],
+            required: false,
             select: false
         },
         phone: {
             type: String,
-            required: [true, 'phone 未填寫']
+            required: false
         },
         birthday: {
             type: Date,
-            required: [true, 'birthday 未填寫']
+            required: false
         },
         address: {
             zipcode: {
                 type: Number,
-                required: [true, 'zipcode 未填寫'],
+                required: false,
                 validate: {
                     validator(value: number) {
-                        return zipCodeList.includes(value);
+                        return value === undefined || zipCodeList.includes(value);
                     },
                     message: 'zipcode 錯誤'
                 }
             },
             detail: {
                 type: String,
-                required: [true, 'detail 未填寫']
+                required: false
             }
         },
         verificationToken: {
             type: String,
             default: '',
+            select: false
+        },
+        googleId: {
+            type: String,
+            required: false,
             select: false
         }
     },
@@ -84,11 +90,11 @@ const userSchema = new Schema<IUser>(
 );
 
 userSchema.virtual('address.county').get(function () {
-    return ZipCodeMap.find(value => value.zipcode === this.address.zipcode)?.county;
+    return ZipCodeMap.find(value => value.zipcode === this.address?.zipcode)?.county;
 });
 
 userSchema.virtual('address.city').get(function () {
-    return ZipCodeMap.find(value => value.zipcode === this.address.zipcode)?.city;
+    return ZipCodeMap.find(value => value.zipcode === this.address?.zipcode)?.city;
 });
 
 export default model('user', userSchema);
