@@ -8,6 +8,29 @@ router.use(checkRequestBodyValidator);
 
 router.post(
     /**
+     * #swagger.description  = "Google 登入"
+     * #swagger.parameters['body'] = {
+            in: 'body',
+            required: true,
+            schema: {
+                credential: "Google ID Token",
+            }
+        }
+     * #swagger.responses[200] = {
+            description: 'Google 登入成功',
+            schema: {
+                "status": true,
+                "token": "eyJhbGciOiJI....",
+                "result": {}
+            }
+        }
+     */
+    '/google',
+    UserController.googleLogin
+);
+
+router.post(
+    /**
      * #swagger.description  = "登入"
      * #swagger.parameters['body'] = {
             in: 'body',

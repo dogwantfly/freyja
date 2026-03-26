@@ -1,6 +1,7 @@
 import type { Request, RequestHandler } from 'express';
 import bcrypt from 'bcryptjs';
 import createHttpError from 'http-errors';
+import { OAuth2Client } from 'google-auth-library';
 import UsersModel from '@/models/user';
 import { generateToken, verifyToken } from '@/utils';
 
@@ -41,6 +42,9 @@ export const login: RequestHandler = async (req, res, next) => {
         if (!user) {
             throw createHttpError(404, '此使用者不存在');
         }
+        if (!user.password) {
+            throw createHttpError(400, '此帳號未設定密碼');
+        }
 
         const checkPassword = await bcrypt.compare(password, user.password);
         if (!checkPassword) {
@@ -66,6 +70,9 @@ export const forget: RequestHandler = async (req, res, next) => {
         const user = await UsersModel.findOne({ email }).select('+verificationToken');
         if (!user) {
             throw createHttpError(404, '此使用者不存在');
+        }
+        if (!user.verificationToken) {
+            throw createHttpError(400, '驗證碼不存在');
         }
 
         const payload = verifyToken(user.verificationToken);
@@ -139,6 +146,50 @@ export const updateInfo: RequestHandler = async (req, res, next) => {
     }
 };
 
+export const googleLogin: RequestHandler = async (req, res, next) => {
+    try {
+        const { credential } = req.body;
+        if (!credential) {
+            throw createHttpError(400, 'Google credential 未提供');
+        }
+
+        const client = new OAuth2Client(process.env.GOOGLE_AUTH_CLIENT_ID);
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_AUTH_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+        if (!payload) {
+            throw createHttpError(400, 'Google 登入失敗');
+        }
+
+        const { sub: googleId, email, name } = payload;
+
+        // Find by googleId or email, link accounts if matched by email
+        let user = await UsersModel.findOne({ $or: [{ googleId }, { email }] }).select('+googleId');
+        if (!user) {
+            user = await UsersModel.create({
+                name: name ?? email,
+                email,
+                googleId
+            });
+        } else if (!user.googleId) {
+            await UsersModel.findByIdAndUpdate(user._id, { googleId });
+        }
+
+        const { password: _, googleId: __, ...result } = user.toObject();
+
+        res.send({
+            status: true,
+            token: generateToken({ userId: user._id }),
+            result
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 const updateUserPassword = async (req: Request) => {
     const { userId, oldPassword, newPassword } = req.body;
     if (!oldPassword || !newPassword) {
@@ -148,6 +199,9 @@ const updateUserPassword = async (req: Request) => {
     const user = await UsersModel.findById(userId).select('+password');
     if (!user) {
         throw createHttpError(404, '此使用者不存在');
+    }
+    if (!user.password) {
+        throw createHttpError(400, '此帳號未設定密碼');
     }
 
     const checkPassword = await bcrypt.compare(oldPassword, user.password);
