@@ -63,6 +63,40 @@ export const createShaEncrypt = (aesEncrypt: string): string => {
   return sha.update(plainText).digest('hex').toUpperCase();
 }
 
+// 對應藍新 QueryTradeInfo CheckValue 規格：
+// SHA256(HashIV=${iv}&Amt=${amt}&MerchantID=${id}&MerchantOrderNo=${no}&HashKey=${key}) → 大寫 hex
+export const createQueryCheckValue = (params: {
+  Amt: number;
+  MerchantOrderNo: string;
+}): string => {
+  if (!HASHKEY || !HASHIV || !MerchantID) {
+    throw new Error('HASHKEY, HASHIV and MerchantID are required');
+  }
+  const sha = crypto.createHash('sha256');
+  const plainText = `HashIV=${HASHIV}&Amt=${params.Amt}&MerchantID=${MerchantID}&MerchantOrderNo=${params.MerchantOrderNo}&HashKey=${HASHKEY}`;
+  return sha.update(plainText).digest('hex').toUpperCase();
+}
+
+// 對應藍新 CreditCard/Close PostData_ 加密規格：
+// AES-256-CBC 加密關閉參數字串，與 createSesEncrypt 模式一致，輸出 hex
+export const createCloseEncrypt = (params: {
+  MerchantOrderNo: string;
+  Amt: number;
+  IndexType: number;
+  CloseType: number;
+}): string => {
+  if (!HASHKEY || !HASHIV) {
+    throw new Error('HASHKEY and HASHIV are required');
+  }
+  const timeStamp = Math.floor(Date.now() / 1000).toString();
+  const dataChain = `RespondType=JSON&TimeStamp=${timeStamp}&MerchantOrderNo=${params.MerchantOrderNo}&Amt=${params.Amt}&IndexType=${params.IndexType}&CloseType=${params.CloseType}`;
+  const key = Buffer.from(HASHKEY, 'utf8');
+  const iv = Buffer.from(HASHIV, 'utf8');
+  const encrypt = crypto.createCipheriv('aes-256-cbc', key, iv);
+  const enc = encrypt.update(dataChain, 'utf8', 'hex');
+  return enc + encrypt.final('hex');
+}
+
 // 對應文件 21, 22 頁：將 aes 解密
 export const createSesDecrypt = (TradeInfo: string): any => {
   if (!HASHKEY || !HASHIV) {

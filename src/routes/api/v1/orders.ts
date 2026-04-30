@@ -94,4 +94,8 @@ router.delete(
     OrderController.deleteOrderByUser
 );
 
+router.post('/:id/cancel', OrderController.cancelOrderByUser);
+
+router.get('/:id/payment-status', OrderController.getOrderPaymentStatus);
+
 export default router;

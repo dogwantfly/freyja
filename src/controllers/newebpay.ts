@@ -1,6 +1,6 @@
 // controllers/newebpay.ts
 import { Request, Response, NextFunction } from 'express'
-import { createSesDecrypt, createShaEncrypt } from '../utils/crypto'
+import { createSesDecrypt, createShaEncrypt, createQueryCheckValue, createCloseEncrypt } from '../utils/crypto'
 import OrderModel from '@/models/order';
 
 
@@ -54,6 +54,90 @@ export const notify = async (req: Request, res: Response, next: NextFunction) =>
   }
 }
 
+
+/**
+ * 查詢藍新金流交易資訊 (QueryTradeInfo)
+ * 以 MerchantOrderNo + Amt 建立 CheckValue 後呼叫藍新 API，回傳交易狀態
+ */
+export const queryTradeInfo = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { MerchantOrderNo, Amt } = req.body
+    if (!MerchantOrderNo || Amt === undefined) {
+      return res.status(400).json({ error: 'MerchantOrderNo and Amt are required' })
+    }
+
+    const timeStamp = Math.floor(Date.now() / 1000).toString()
+    const checkValue = createQueryCheckValue({ Amt: Number(Amt), MerchantOrderNo })
+
+    const params = new URLSearchParams({
+      MerchantID: process.env.MerchantID || '',
+      Version: '2.0',
+      RespondType: 'JSON',
+      TimeStamp: timeStamp,
+      MerchantOrderNo,
+      Amt: String(Amt),
+      Gateway: '',
+      CheckValue: checkValue,
+    })
+
+    const apiUrl = `${process.env.NEWEBPAY_API_URL || 'https://ccore.newebpay.com'}/API/QueryTradeInfo`
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    })
+
+    const result = await response.json() as any
+    if (result.Status !== 'SUCCESS') {
+      return res.status(400).json({ error: result.Message || 'Query failed' })
+    }
+
+    return res.json(result)
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * 關閉藍新金流信用卡授權 (CreditCard/Close)
+ * AES 加密關閉參數後呼叫藍新 API
+ */
+export const creditCardClose = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { MerchantOrderNo, Amt, CloseType, IndexType } = req.body
+    if (!MerchantOrderNo || Amt === undefined || CloseType === undefined || IndexType === undefined) {
+      return res.status(400).json({ error: 'MerchantOrderNo, Amt, CloseType and IndexType are required' })
+    }
+
+    const postData = createCloseEncrypt({
+      MerchantOrderNo,
+      Amt: Number(Amt),
+      IndexType: Number(IndexType),
+      CloseType: Number(CloseType),
+    })
+
+    const params = new URLSearchParams({
+      MerchantID: process.env.MerchantID || '',
+      PostData_: postData,
+    })
+
+    const apiUrl = `${process.env.NEWEBPAY_API_URL || 'https://ccore.newebpay.com'}/API/CreditCard/Close`
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    })
+
+    const result = await response.json() as any
+    if (result.Status !== 'SUCCESS') {
+      return res.status(400).json({ error: result.Message || 'Close failed' })
+    }
+
+    return res.json(result)
+  } catch (error) {
+    next(error)
+  }
+}
 
 /**
  * 處理藍新金流導回 (Return) 請求

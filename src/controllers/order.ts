@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express';
 import createHttpError from 'http-errors';
 import OrderModel from '@/models/order';
-import { createSesEncrypt, createShaEncrypt } from '@/utils/crypto';
+import { createSesEncrypt, createShaEncrypt, createCloseEncrypt, createQueryCheckValue } from '@/utils/crypto';
 
 export const getAllOrderList: RequestHandler = async (_req, res, next) => {
     try {
@@ -189,6 +189,89 @@ export const deleteOrderByAdmin: RequestHandler = async (req, res, next) => {
             status: true,
             result
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const cancelOrderByUser: RequestHandler = async (req, res, next) => {
+    try {
+        const order = await OrderModel.findOne({
+            _id: req.params.id,
+            orderUserId: req.user?._id,
+        });
+        if (!order) {
+            return res.status(404).json({ error: '此訂單不存在' });
+        }
+
+        if (order.isPaid && order.paymentInfo) {
+            const postData = createCloseEncrypt({
+                MerchantOrderNo: order.paymentInfo.MerchantOrderNo,
+                Amt: order.paymentInfo.Amt,
+                IndexType: 1,
+                CloseType: 2,
+            });
+            const params = new URLSearchParams({
+                MerchantID: process.env.MerchantID || '',
+                PostData_: postData,
+            });
+            const apiUrl = `${process.env.NEWEBPAY_API_URL || 'https://ccore.newebpay.com'}/API/CreditCard/Close`;
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString(),
+            });
+            const result = await response.json() as { Status: string; Message?: string };
+            if (result.Status !== 'SUCCESS') {
+                return res.status(400).json({ error: result.Message || 'Refund failed' });
+            }
+        }
+
+        order.status = -1;
+        await order.save();
+        return res.json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getOrderPaymentStatus: RequestHandler = async (req, res, next) => {
+    try {
+        const order = await OrderModel.findOne({
+            _id: req.params.id,
+            orderUserId: req.user?._id,
+        });
+        if (!order) {
+            return res.status(404).json({ error: '此訂單不存在' });
+        }
+        if (!order.paymentInfo) {
+            return res.status(400).json({ error: '此訂單無付款資訊' });
+        }
+
+        const { MerchantOrderNo, Amt } = order.paymentInfo;
+        const timeStamp = Math.floor(Date.now() / 1000).toString();
+        const checkValue = createQueryCheckValue({ Amt, MerchantOrderNo });
+        const params = new URLSearchParams({
+            MerchantID: process.env.MerchantID || '',
+            Version: '2.0',
+            RespondType: 'JSON',
+            TimeStamp: timeStamp,
+            MerchantOrderNo,
+            Amt: String(Amt),
+            Gateway: '',
+            CheckValue: checkValue,
+        });
+        const apiUrl = `${process.env.NEWEBPAY_API_URL || 'https://ccore.newebpay.com'}/API/QueryTradeInfo`;
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString(),
+        });
+        const result = await response.json() as { Status: string; Message?: string };
+        if (result.Status !== 'SUCCESS') {
+            return res.status(400).json({ error: result.Message || 'Query failed' });
+        }
+        return res.json(result);
     } catch (error) {
         next(error);
     }
