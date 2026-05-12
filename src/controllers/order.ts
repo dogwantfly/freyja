@@ -253,7 +253,7 @@ export const getOrderPaymentStatus: RequestHandler = async (req, res, next) => {
         const checkValue = createQueryCheckValue({ Amt, MerchantOrderNo });
         const params = new URLSearchParams({
             MerchantID: process.env.MerchantID || '',
-            Version: '2.0',
+            Version: '1.3',
             RespondType: 'JSON',
             TimeStamp: timeStamp,
             MerchantOrderNo,

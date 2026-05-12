@@ -71,7 +71,7 @@ export const queryTradeInfo = async (req: Request, res: Response, next: NextFunc
 
     const params = new URLSearchParams({
       MerchantID: process.env.MerchantID || '',
-      Version: '2.0',
+      Version: '1.3',
       RespondType: 'JSON',
       TimeStamp: timeStamp,
       MerchantOrderNo,
