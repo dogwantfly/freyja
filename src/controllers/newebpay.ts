@@ -94,7 +94,7 @@ export const queryTradeInfo = async (req: Request, res: Response, next: NextFunc
 
     return res.json(result)
   } catch (error) {
-    next(error)
+    return next(error)
   }
 }
 
@@ -135,7 +135,7 @@ export const creditCardClose = async (req: Request, res: Response, next: NextFun
 
     return res.json(result)
   } catch (error) {
-    next(error)
+    return next(error)
   }
 }
 
@@ -153,7 +153,7 @@ export const paymentReturn = (req: Request, res: Response, next: NextFunction) =
     console.log('frontendURL', `${frontendURL}/pay/success`)
     return res.redirect(`${frontendURL}/pay/success`)
   } catch (error) {
-    next(error)
+    return next(error)
   }
 }
 

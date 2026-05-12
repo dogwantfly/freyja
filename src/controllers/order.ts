@@ -231,7 +231,7 @@ export const cancelOrderByUser: RequestHandler = async (req, res, next) => {
         await order.save();
         return res.json({ success: true });
     } catch (error) {
-        next(error);
+        return next(error);
     }
 };
 
@@ -273,6 +273,6 @@ export const getOrderPaymentStatus: RequestHandler = async (req, res, next) => {
         }
         return res.json(result);
     } catch (error) {
-        next(error);
+        return next(error);
     }
 };
