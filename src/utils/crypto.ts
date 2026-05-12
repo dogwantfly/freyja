@@ -73,7 +73,7 @@ export const createQueryCheckValue = (params: {
     throw new Error('HASHKEY, HASHIV and MerchantID are required');
   }
   const sha = crypto.createHash('sha256');
-  const plainText = `HashIV=${HASHIV}&Amt=${params.Amt}&MerchantID=${MerchantID}&MerchantOrderNo=${params.MerchantOrderNo}&HashKey=${HASHKEY}`;
+  const plainText = `IV=${HASHIV}&Amt=${params.Amt}&MerchantID=${MerchantID}&MerchantOrderNo=${params.MerchantOrderNo}&Key=${HASHKEY}`;
   return sha.update(plainText).digest('hex').toUpperCase();
 }
 
