@@ -204,7 +204,7 @@ export const cancelOrderByUser: RequestHandler = async (req, res, next) => {
             return res.status(404).json({ error: '此訂單不存在' });
         }
 
-        if (order.isPaid && order.paymentInfo) {
+        if (order.paymentInfo?.paymentType === 'CREDIT') {
             const postData = createCloseEncrypt({
                 MerchantOrderNo: order.paymentInfo.MerchantOrderNo,
                 Amt: order.paymentInfo.Amt,

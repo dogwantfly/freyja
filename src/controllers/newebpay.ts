@@ -39,6 +39,13 @@ export const notify = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     order.isPaid = true;
+    if (data?.Result?.PaymentType) {
+      order.paymentInfo = {
+        ...order.paymentInfo,
+        PaymentType: data?.Result?.PaymentType,
+      } as any
+      order.markModified('paymentInfo');
+    }
     await order.save()
 
     console.log('付款完成，訂單：', order)

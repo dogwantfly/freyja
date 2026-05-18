@@ -10,6 +10,7 @@ export interface IPaymentInfo {
   Email: string;
   aesEncrypt: string;
   shaEncrypt: string;
+  paymentType: string;
 }
 
 export interface IOrder extends Document {
