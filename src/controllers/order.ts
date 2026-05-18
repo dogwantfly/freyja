@@ -212,7 +212,7 @@ export const cancelOrderByUser: RequestHandler = async (req, res, next) => {
                 CloseType: 2,
             });
             const params = new URLSearchParams({
-                MerchantID: process.env.MerchantID || '',
+                MerchantID_: process.env.MerchantID || '',
                 PostData_: postData,
             });
             const apiUrl = `${process.env.NEWEBPAY_API_URL || 'https://ccore.newebpay.com'}/API/CreditCard/Close`;
