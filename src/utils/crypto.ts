@@ -8,6 +8,15 @@ const {
   ReturnUrl,
 } = process.env;
 const RespondType = 'JSON';
+
+const CLOSE_API_VERSION = '1.1';
+
+function aes256CbcEncrypt(plainText: string): string {
+  const key = new Uint8Array(Buffer.from(HASHKEY!, 'utf8'));
+  const iv = new Uint8Array(Buffer.from(HASHIV!, 'utf8'));
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  return cipher.update(plainText, 'utf8', 'hex') + cipher.final('hex');
+}
 // 字串組合
 function genDataChain(order: { 
   TimeStamp: string;
@@ -44,11 +53,7 @@ export const createSesEncrypt = (TradeInfo: {
     throw new Error('HASHKEY and HASHIV are required');
   }
   
-  const key = Buffer.from(HASHKEY, 'utf8');
-  const iv = Buffer.from(HASHIV, 'utf8');
-  const encrypt = crypto.createCipheriv('aes-256-cbc', key, iv);
-  const enc = encrypt.update(genDataChain(TradeInfo), 'utf8', 'hex');
-  return enc + encrypt.final('hex');
+  return aes256CbcEncrypt(genDataChain(TradeInfo));
 }
 
 // 對應文件 P18：使用 sha256 加密
@@ -84,17 +89,15 @@ export const createCloseEncrypt = (params: {
   Amt: number;
   IndexType: number;
   CloseType: number;
+  Version?: string;
 }): string => {
   if (!HASHKEY || !HASHIV) {
     throw new Error('HASHKEY and HASHIV are required');
   }
+  const version = params.Version ?? CLOSE_API_VERSION;
   const timeStamp = Math.floor(Date.now() / 1000).toString();
-  const dataChain = `RespondType=JSON&TimeStamp=${timeStamp}&MerchantOrderNo=${params.MerchantOrderNo}&Amt=${params.Amt}&IndexType=${params.IndexType}&CloseType=${params.CloseType}`;
-  const key = Buffer.from(HASHKEY, 'utf8');
-  const iv = Buffer.from(HASHIV, 'utf8');
-  const encrypt = crypto.createCipheriv('aes-256-cbc', key, iv);
-  const enc = encrypt.update(dataChain, 'utf8', 'hex');
-  return enc + encrypt.final('hex');
+  const dataChain = `RespondType=JSON&Version=${version}&TimeStamp=${timeStamp}&MerchantOrderNo=${params.MerchantOrderNo}&Amt=${params.Amt}&IndexType=${params.IndexType}&CloseType=${params.CloseType}`;
+  return aes256CbcEncrypt(dataChain);
 }
 
 // 對應文件 21, 22 頁：將 aes 解密

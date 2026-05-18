@@ -124,7 +124,7 @@ export const creditCardClose = async (req: Request, res: Response, next: NextFun
     })
 
     const params = new URLSearchParams({
-      MerchantID: process.env.MerchantID || '',
+      MerchantID_: process.env.MerchantID || '',
       PostData_: postData,
     })
 

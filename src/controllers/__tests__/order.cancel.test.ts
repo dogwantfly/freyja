@@ -41,7 +41,7 @@ describe('cancelOrderByUser', () => {
       paymentInfo: {
         MerchantOrderNo: 'ORDER20240101001',
         Amt: 3000,
-        paymentType: 'CREDIT',
+        PaymentType: 'CREDIT',
       },
       status: 0,
       save: mockSave.mockResolvedValue(undefined),
@@ -65,7 +65,7 @@ describe('cancelOrderByUser', () => {
       paymentInfo: {
         MerchantOrderNo: 'ORDER20240101001',
         Amt: 3000,
-        paymentType: 'VACC',
+        PaymentType: 'VACC',
       },
       status: 0,
       save: mockSave.mockResolvedValue(undefined),
@@ -101,7 +101,7 @@ describe('cancelOrderByUser', () => {
       paymentInfo: {
         MerchantOrderNo: 'ORDER20240101001',
         Amt: 3000,
-        paymentType: 'CREDIT',
+        PaymentType: 'CREDIT',
       },
       status: 0,
       save: mockSave,
