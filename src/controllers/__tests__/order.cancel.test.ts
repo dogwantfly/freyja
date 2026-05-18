@@ -36,10 +36,13 @@ describe('cancelOrderByUser', () => {
     next = vi.fn()
   })
 
-  it('calls newebpay CreditCard/Close with CloseType=2 and cancels order when isPaid is true', async () => {
+  it('calls newebpay CreditCard/Close with CloseType=2 and cancels order when paymentType is CREDIT', async () => {
     const mockOrder = {
-      isPaid: true,
-      paymentInfo: { MerchantOrderNo: 'ORDER20240101001', Amt: 3000 },
+      paymentInfo: {
+        MerchantOrderNo: 'ORDER20240101001',
+        Amt: 3000,
+        paymentType: 'CREDIT',
+      },
       status: 0,
       save: mockSave.mockResolvedValue(undefined),
     }
@@ -57,9 +60,28 @@ describe('cancelOrderByUser', () => {
     expect(res.json).toHaveBeenCalledWith({ success: true })
   })
 
-  it('cancels order without calling newebpay when isPaid is false', async () => {
+  it('cancels order without calling newebpay when paymentType is VACC', async () => {
     const mockOrder = {
-      isPaid: false,
+      paymentInfo: {
+        MerchantOrderNo: 'ORDER20240101001',
+        Amt: 3000,
+        paymentType: 'VACC',
+      },
+      status: 0,
+      save: mockSave.mockResolvedValue(undefined),
+    }
+    mockFindOne.mockResolvedValue(mockOrder)
+
+    await cancelOrderByUser(req as Request, res as Response, next)
+
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(mockOrder.status).toBe(-1)
+    expect(mockSave).toHaveBeenCalled()
+    expect(res.json).toHaveBeenCalledWith({ success: true })
+  })
+
+  it('cancels order without calling newebpay when paymentInfo is null', async () => {
+    const mockOrder = {
       paymentInfo: null,
       status: 0,
       save: mockSave.mockResolvedValue(undefined),
@@ -76,8 +98,11 @@ describe('cancelOrderByUser', () => {
 
   it('returns 400 and does not cancel order when newebpay close fails', async () => {
     const mockOrder = {
-      isPaid: true,
-      paymentInfo: { MerchantOrderNo: 'ORDER20240101001', Amt: 3000 },
+      paymentInfo: {
+        MerchantOrderNo: 'ORDER20240101001',
+        Amt: 3000,
+        paymentType: 'CREDIT',
+      },
       status: 0,
       save: mockSave,
     }

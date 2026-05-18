@@ -42,7 +42,7 @@ export const notify = async (req: Request, res: Response, next: NextFunction) =>
     if (data?.Result?.PaymentType) {
       order.paymentInfo = {
         ...order.paymentInfo,
-        PaymentType: data?.Result?.PaymentType,
+        paymentType: data?.Result?.PaymentType,
       } as any
       order.markModified('paymentInfo');
     }
